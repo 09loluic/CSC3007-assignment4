@@ -1,0 +1,142 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style></style>
+</head>
+<body>
+<svg></svg>
+<div class="tooltip"> </div>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<script>
+let width = 800, height = 800;
+let svg = d3.select("svg")
+    .attr("viewBox", "0 0 " + width + " " + height)
+
+var linksUrl = "https://chi-loong.github.io/CSC3007/assignments/links-sample.json";
+var casesUrl = "https://chi-loong.github.io/CSC3007/assignments/cases-sample.json";
+// Load external data
+Promise.all([d3.json(linksUrl), d3.json(casesUrl)]).then(data => {
+
+// Data preprocessing
+    data[0].forEach(e => {
+        e.source = e.infector;
+        e.target = e.infectee;
+    });
+    
+console.log(data[0]); //links
+console.log(data[1]); //cases
+
+var linksData = data[0];
+var nodesData = data[1];
+
+var svg = d3.select("svg"),
+     width =  +svg.attr("width"),
+     height = +svg.attr("height");
+
+  var link = svg.append("g")
+    .selectAll("line")
+    .data(linksData)
+    .enter()
+    .append("line")
+    .attr("stroke-width", 1)
+    .attr("stroke", "black");
+
+
+  var node = svg.append("g")
+    .selectAll("g")
+    .data(nodesData)
+    .enter()
+    .append("g")
+    .call(d3.drag()
+      .on("start", dragstarted)
+      .on("drag", dragged)
+      .on("end", dragended));
+    
+ var circles = node.append("circle")
+    .data(nodesData)
+    .attr("r", 5)
+    .attr("fill", function(d){
+        if(d.gender == "female"){
+
+            return "red";
+        }
+        else{
+
+            return "blue";
+        }
+    }).on("mouseover", (event, d) => {
+        d3.select(".tooltip")
+        .html("id: " + d.id + "<br>gender: " +d.gender + "<br>Nationality: " + d.nationality+ "<br>Occupation: " + d.occupation + "<br>Organization: " + d.organization+ "<br>Date: " + d.date   + "<br>Serology: " + d.serology + "<br>Vaccinated: " + d.vaccinated)
+        .style("position", "absolute")
+        .style("background", "#fff")
+        .style("left", (event.pageX) + "px")
+        .style("top", (event.pageY) + "px");        
+
+d3.select(event.currentTarget)
+.classed("selected", true)
+.attr("style", "stroke: red;") ;
+
+
+
+}).on("mouseout", (event, d) => {
+    d3.select(".tooltip")
+    .html("");
+
+    d3.select(event.currentTarget)
+        .classed("selected",false)
+        .attr("style", "stroke: none;") ;
+})
+
+
+
+  var simulation = d3.forceSimulation()
+    .force("link", d3.forceLink().id(function(d) { return d.id; }))
+    .force("charge", d3.forceManyBody())
+    .force("center", d3.forceCenter(200, 150));
+
+  simulation
+    .nodes(nodesData)
+    .on("tick", ticked);
+
+  simulation.force("link")
+    .links(linksData);
+
+
+  function ticked() {
+    link
+      .attr("x1", function(d) { return d.source.x; })
+      .attr("y1", function(d) { return d.source.y; })
+      .attr("x2", function(d) { return d.target.x; })
+      .attr("y2", function(d) { return d.target.y; });
+    node.attr("transform", function(d) { return `translate(${d.x},${d.y})` });
+  }
+
+
+  function dragstarted(event,d) {
+    
+    if(!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+  }
+
+  function dragged(event,d) {
+    d.fx = event.x;
+    d.fy = event.y;
+  }
+
+  function dragended(event,d) {
+
+    if(!event.active) simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
+  }
+
+
+})
+</script>
+
+</body>
+</html>
