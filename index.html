@@ -15,8 +15,8 @@ let width = 800, height = 800;
 let svg = d3.select("svg")
     .attr("viewBox", "0 0 " + width + " " + height)
 
-var linksUrl = "https://chi-loong.github.io/CSC3007/assignments/links-sample.json";
-var casesUrl = "https://chi-loong.github.io/CSC3007/assignments/cases-sample.json";
+var linksUrl = "links-sample.json";
+var casesUrl = "cases-sample.json";
 // Load external data
 Promise.all([d3.json(linksUrl), d3.json(casesUrl)]).then(data => {
 
