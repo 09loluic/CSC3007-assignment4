@@ -6,43 +6,74 @@
   <style></style>
 </head>
 <body>
+  <div style="text-align:center">
+    <h3>
+      <label for="groupDropDown" class="visually-hidden">Select Group: </label>
+    <select id="groupDropDown" name="Year" onchange="loadData()">
+    <option value="Gender">Gender</option>
+    <option value="Vaccination">Vaccation</option>
+
+    </option>
+    </select>
+    
+    </h3>
+    </div>
 <svg></svg>
 <div class="tooltip"> </div>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 
 <script>
+let linksData = [];
+let nodesData = [];
 let width = 800, height = 800;
 let svg = d3.select("svg")
     .attr("viewBox", "0 0 " + width + " " + height)
-
 var linksUrl = "links-sample.json";
 var casesUrl = "cases-sample.json";
 // Load external data
 Promise.all([d3.json(linksUrl), d3.json(casesUrl)]).then(data => {
+
 
 // Data preprocessing
     data[0].forEach(e => {
         e.source = e.infector;
         e.target = e.infectee;
     });
+  
+linksData = data[0];
+nodesData = data[1];
+loadData()
+})  
+
+
+function loadData(){
+  var sel = d3.select("#groupDropDown").property("value");
+  const curve = d3.line().curve(d3.curveNatural);
+  svg.html("")
+  svg.append('defs').append('marker')
+        .attr('id','arrowhead')
+        .attr('viewBox','-0 -5 10 10')
+        .attr('refX',16)
+        .attr('refY',0)
+        .attr('orient','auto')
+        .attr('markerWidth',6)
+        .attr('markerHeight',13)
+        .attr('xoverflow','visible')
+        .append('svg:path')
+        .attr("d", "M0,-5L10,0L0,5")
+        .attr('fill', 'black')
     
-console.log(data[0]); //links
-console.log(data[1]); //cases
 
-var linksData = data[0];
-var nodesData = data[1];
 
-var svg = d3.select("svg"),
-     width =  +svg.attr("width"),
-     height = +svg.attr("height");
-
-  var link = svg.append("g")
+ var link = svg.append("g")
     .selectAll("line")
     .data(linksData)
     .enter()
     .append("line")
-    .attr("stroke-width", 1)
-    .attr("stroke", "black");
+    
+    // .attr("stroke-width", 1)
+    .attr("stroke", "black")
+    .attr("marker-end", "url(#arrowhead)");
 
 
   var node = svg.append("g")
@@ -59,14 +90,14 @@ var svg = d3.select("svg"),
     .data(nodesData)
     .attr("r", 5)
     .attr("fill", function(d){
-        if(d.gender == "female"){
+      if(sel=="Gender"){
 
-            return "red";
-        }
-        else{
-
-            return "blue";
-        }
+       return findColor(d.gender);
+      }
+      else if(sel=="Vaccination"){
+        return findColor(d.vaccinated);
+}
+       
     }).on("mouseover", (event, d) => {
         d3.select(".tooltip")
         .html("id: " + d.id + "<br>gender: " +d.gender + "<br>Nationality: " + d.nationality+ "<br>Occupation: " + d.occupation + "<br>Organization: " + d.organization+ "<br>Date: " + d.date   + "<br>Serology: " + d.serology + "<br>Vaccinated: " + d.vaccinated)
@@ -74,21 +105,17 @@ var svg = d3.select("svg"),
         .style("background", "#fff")
         .style("left", (event.pageX) + "px")
         .style("top", (event.pageY) + "px");        
-
-d3.select(event.currentTarget)
-.classed("selected", true)
-.attr("style", "stroke: red;") ;
-
-
-
-}).on("mouseout", (event, d) => {
-    d3.select(".tooltip")
-    .html("");
-
+        
+        d3.select(event.currentTarget)
+        .classed("selected", true)
+        .attr("style", "stroke: red;") ;
+    }).on("mouseout", (event, d) => {
+    
+    d3.select(".tooltip").html("");
     d3.select(event.currentTarget)
         .classed("selected",false)
         .attr("style", "stroke: none;") ;
-})
+      })
 
 
 
@@ -103,9 +130,7 @@ d3.select(event.currentTarget)
 
   simulation.force("link")
     .links(linksData);
-
-
-  function ticked() {
+    function ticked() {
     link
       .attr("x1", function(d) { return d.source.x; })
       .attr("y1", function(d) { return d.source.y; })
@@ -114,8 +139,7 @@ d3.select(event.currentTarget)
     node.attr("transform", function(d) { return `translate(${d.x},${d.y})` });
   }
 
-
-  function dragstarted(event,d) {
+ function dragstarted(event,d) {
     
     if(!event.active) simulation.alphaTarget(0.3).restart();
     d.fx = d.x;
@@ -134,8 +158,30 @@ d3.select(event.currentTarget)
     d.fy = null;
   }
 
+}
 
-})
+function findColor(groupContent){
+
+  var color = "";
+  switch(groupContent) {
+  case "yes (2 doses)":
+    color = "Green";
+    break;
+  case "male":
+  color = "blue";
+    // code block
+    break;
+  case "partial (1 dose)":
+    color = "#FFCCCB";
+    break;
+  case "female":
+  default:
+    color = "red";
+    // code block
+}
+return color
+}
+
 </script>
 
 </body>
