@@ -2,17 +2,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <style></style>
+<meta charset="UTF-8">
+<script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
-<body>
+<body >
   <div style="text-align:center">
     <h3>
-      <label for="groupDropDown" class="visually-hidden">Select Group: </label>
-    <select id="groupDropDown" name="Year" onchange="loadData()">
-    <option value="Gender">Gender</option>
-    <option value="Vaccination">Vaccation</option>
 
+    <label for="groupDropDown" class="visually-hidden">Select Category: </label>
+    <select id="groupDropDown" onchange="loadData()">
+    <option value="Gender">Gender</option>
+    <option value="Vaccination">Vaccination</option>
     </option>
     </select>
     
@@ -20,7 +20,6 @@
     </div>
 <svg></svg>
 <div class="tooltip"> </div>
-<script src="https://d3js.org/d3.v7.min.js"></script>
 
 <script>
 let linksData = [];
@@ -30,7 +29,9 @@ let svg = d3.select("svg")
     .attr("viewBox", "0 0 " + width + " " + height)
 var linksUrl = "links-sample.json";
 var casesUrl = "cases-sample.json";
+
 // Load external data
+
 Promise.all([d3.json(linksUrl), d3.json(casesUrl)]).then(data => {
 
 
@@ -47,9 +48,9 @@ loadData()
 
 
 function loadData(){
+
   var sel = d3.select("#groupDropDown").property("value");
-  const curve = d3.line().curve(d3.curveNatural);
-  svg.html("")
+  svg.html("");
   svg.append('defs').append('marker')
         .attr('id','arrowhead')
         .attr('viewBox','-0 -5 10 10')
@@ -66,17 +67,18 @@ function loadData(){
 
 
  var link = svg.append("g")
-    .selectAll("line")
+    .attr('class','links')
+    .selectAll("path")
     .data(linksData)
     .enter()
-    .append("line")
-    
-    // .attr("stroke-width", 1)
+    .append("path")
+    .attr("fill", "none")
     .attr("stroke", "black")
     .attr("marker-end", "url(#arrowhead)");
 
 
-  var node = svg.append("g")
+  var node = svg.append("g") 
+  .attr('class','nodes')
     .selectAll("g")
     .data(nodesData)
     .enter()
@@ -130,14 +132,20 @@ function loadData(){
 
   simulation.force("link")
     .links(linksData);
+
     function ticked() {
-    link
-      .attr("x1", function(d) { return d.source.x; })
-      .attr("y1", function(d) { return d.source.y; })
-      .attr("x2", function(d) { return d.target.x; })
-      .attr("y2", function(d) { return d.target.y; });
-    node.attr("transform", function(d) { return `translate(${d.x},${d.y})` });
-  }
+    
+    link.attr("d", function(d) {
+
+    var dx = d.target.x - d.source.x,
+        dy = d.target.y - d.source.y,
+        dr = Math.sqrt(dx * dx + dy * dy);
+    return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
+});
+  
+  node.attr("transform", function(d) { return `translate(${d.x},${d.y})` });
+  loadLegend(sel)
+}
 
  function dragstarted(event,d) {
     
@@ -175,13 +183,39 @@ function findColor(groupContent){
     color = "#FFCCCB";
     break;
   case "female":
+    color = "pink";
+    break;
   default:
     color = "red";
     // code block
 }
 return color
 }
+function loadLegend(Category){
 
+    d3.selectAll('.legend').remove();
+
+  switch(Category){
+    case "Gender":
+    svg.append("circle").attr("cx",680).attr("cy",140).attr("r", 6).attr('class', 'legend').style("fill", "blue")
+    svg.append("text").attr("x", 700).attr("y", 140).text("Male").attr('class', 'legend').style("font-size", "15px").attr("alignment-baseline","middle")
+
+    svg.append("circle").attr("cx",680).attr("cy",160).attr("r", 6).attr('class', 'legend').style("fill", "pink")
+    svg.append("text").attr("x", 700).attr("y", 160).text("Female").attr('class', 'legend').style("font-size", "15px").attr("alignment-baseline","middle")
+break;
+
+case "Vaccination":
+svg.append("circle").attr("cx",680).attr("cy",140).attr("r", 6).attr('class', 'legend').style("fill", "green")
+svg.append("text").attr("x", 700).attr("y", 140).text("Yes").attr('class', 'legend').style("font-size", "15px").attr("alignment-baseline","middle")
+
+svg.append("circle").attr("cx",680).attr("cy",160).attr("r", 6).attr('class', 'legend').style("fill", "red")
+svg.append("text").attr("x", 700).attr("y", 160).text("No").attr('class', 'legend').style("font-size", "15px").attr("alignment-baseline","middle")
+
+svg.append("circle").attr("cx",680).attr("cy",180).attr("r", 6).attr('class', 'legend').style("fill", "#FFCCCB")
+svg.append("text").attr("x", 700).attr("y", 180).text("Partial").attr('class', 'legend').style("font-size", "15px").attr("alignment-baseline","middle")
+break;
+  }
+}
 </script>
 
 </body>
